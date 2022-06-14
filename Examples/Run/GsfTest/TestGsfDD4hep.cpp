@@ -56,6 +56,8 @@
 #include "TestGsfGeneric.hpp"
 #include "TestHelpers.hpp"
 
+#include <filesystem>
+
 using namespace Acts::UnitLiterals;
 
 int main(int argc, char **argv) {

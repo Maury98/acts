@@ -26,6 +26,7 @@
 #include "ActsExamples/Io/Csv/CsvTrackingGeometryWriter.hpp"
 #include "ActsExamples/Io/Performance/TrackFitterPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectoryStatesWriter.hpp"
+#include "ActsExamples/Io/Root/RootTrajectorySummaryWriter.hpp"
 #include "ActsExamples/Plugins/Obj/ObjPropagationStepsWriter.hpp"
 #include "ActsExamples/Plugins/Obj/ObjSpacePointWriter.hpp"
 #include "ActsExamples/Plugins/Obj/ObjTrackingGeometryWriter.hpp"
@@ -276,6 +277,17 @@ int testGsf(const GsfTestSettings &settings) {
   //         enabled");
   //   }
 
+    // Gsf settings
+  setGsfMaxComponents(settings.maxComponents);
+  setGsfAbortOnError(settings.gsfAbortOnError);
+  setGsfMaxSteps(settings.maxSteps);
+  setGsfLoopProtection(settings.gsfLoopProtection);
+  setGsfApplyMaterialEffects(settings.gsfApplyMaterialEffects);
+  setGsfStepperInterface(settings.stepperInterface);
+  setBetheHeitlerHighX0Path(settings.gsfBetheHeitlerHighX0Path);
+  setBetheHeitlerLowX0Path(settings.gsfBetheHeitlerLowX0Path);
+
+
   // Summary
   ACTS_INFO("Parameters: numParticles = " << settings.numParticles);
   ACTS_INFO("Parameters: B-Field strength at origin = " << [&]() {
@@ -299,6 +311,22 @@ int testGsf(const GsfTestSettings &settings) {
             << std::boolalpha << settings.gsfApplyMaterialEffects);
   ACTS_INFO("Parameters: Stepper interface: "
             << static_cast<int>(settings.stepperInterface));
+  
+  std::cout << "Coucou" << std::endl;
+  ACTS_INFO("Parameters: phi min = " << settings.phiMin);
+  ACTS_INFO("Parameters: phi max = " << settings.phiMax);
+  ACTS_INFO("Parameters: theta min = " << settings.thetaMin);
+  ACTS_INFO("Parameters: theta max = " << settings.thetaMax);
+  ACTS_INFO("Parameters: uniform eta = " << settings.etaUniform);
+  ACTS_INFO("Parameters: p min = " << settings.pMin);
+  ACTS_INFO("Parameters: p max = " << settings.pMax);
+  ACTS_INFO("Parameters: pTransverse = " << settings.pTransverse);
+  ACTS_INFO("Parameters: PDG = " << settings.pdg);
+  ACTS_INFO("Parameters: number of particles = " << settings.numParticles);
+  ACTS_INFO("Parameters: beam spot XY std dev = " << settings.vertexXYstd);
+  ACTS_INFO("Parameters: beam spot Z std dev = " << settings.vertexZstd);
+  ACTS_INFO("Parameters: beam spot t std dev = " << settings.vertexTstd);
+
 
   // Init Sequencer
   ActsExamples::Sequencer::Config seqCfg;
@@ -321,24 +349,20 @@ int testGsf(const GsfTestSettings &settings) {
     seedFile << settings.seed << "\n";
   }
 
-  // Gsf settings
-  setGsfMaxComponents(settings.maxComponents);
-  setGsfAbortOnError(settings.gsfAbortOnError);
-  setGsfMaxSteps(settings.maxSteps);
-  setGsfLoopProtection(settings.gsfLoopProtection);
-  setGsfApplyMaterialEffects(settings.gsfApplyMaterialEffects);
-  setGsfStepperInterface(settings.stepperInterface);
-  setBetheHeitlerHighX0Path(settings.gsfBetheHeitlerHighX0Path);
-  setBetheHeitlerLowX0Path(settings.gsfBetheHeitlerLowX0Path);
 
   /////////////////////
   // Particle gun
   /////////////////////
   {
-    Acts::Vector4 vertex = Acts::Vector4::Zero();
+    // Acts::Vector4 vertex = Acts::Vector4::Zero();
 
-    auto vertexGen = std::make_shared<ActsExamples::FixedVertexGenerator>();
-    vertexGen->fixed = vertex;
+    // auto vertexGen = std::make_shared<ActsExamples::FixedVertexGenerator>();
+    auto vertexGen = std::make_shared<ActsExamples::GaussianVertexGenerator>();
+    vertexGen->stddev[Acts::ePos0] = settings.vertexXYstd * 1_mm;
+    vertexGen->stddev[Acts::ePos1] = settings.vertexXYstd * 1_mm;
+    vertexGen->stddev[Acts::ePos2] = settings.vertexZstd * 1_mm;
+    vertexGen->stddev[Acts::eTime] = settings.vertexTstd * 1_ns;
+    // vertexGen->fixed = vertex;
 
     ActsExamples::ParametricParticleGenerator::Config pgCfg;
     pgCfg.phiMin = settings.phiMin;
@@ -347,8 +371,11 @@ int testGsf(const GsfTestSettings &settings) {
     pgCfg.thetaMax = settings.thetaMax;
     pgCfg.pMin = settings.pMin;
     pgCfg.pMax = settings.pMax;
-    pgCfg.pdg = Acts::PdgParticle::eElectron;
+    pgCfg.pTransverse = settings.pTransverse;
+    //pgCfg.pdg = Acts::PdgParticle::eElectron;
+    pgCfg.pdg = settings.pdg;
     pgCfg.numParticles = settings.numParticles;
+    pgCfg.etaUniform = settings.etaUniform;
 
     ActsExamples::EventGenerator::Config cfg;
     cfg.generators = {
@@ -622,6 +649,18 @@ int testGsf(const GsfTestSettings &settings) {
 
     sequencer.addWriter(
         std::make_shared<ActsExamples::RootTrajectoryStatesWriter>(
+            cfg, settings.globalLogLevel));
+  }
+
+  if (settings.doGsf) {
+    ActsExamples::RootTrajectorySummaryWriter::Config cfg;
+    cfg.inputMeasurementParticlesMap = kMeasurementParticleMap;
+    cfg.inputParticles = kGeneratedParticles;
+    cfg.inputTrajectories = kGsfOutputTrajectories;
+    cfg.filePath = "gsf_tracksummary.root";
+    cfg.treeName = "tree";
+    sequencer.addWriter(
+        std::make_shared<ActsExamples::RootTrajectorySummaryWriter>(
             cfg, settings.globalLogLevel));
   }
 
