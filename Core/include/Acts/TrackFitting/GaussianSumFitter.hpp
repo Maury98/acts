@@ -143,6 +143,10 @@ struct GaussianSumFitter {
     // Check if we have the correct navigator
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
+
+    ACTS_INFO("#AM 3.1415926535897932384626433832795")
+    
+
     // Initialize the forward propagation with the DirectNavigator
     auto fwdPropInitializer = [this](const auto& opts, const auto& logger) {
       using Actors = ActionList<GsfActor>;
