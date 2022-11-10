@@ -17,6 +17,7 @@
 #include "Acts/TrackFitting/detail/GsfActor.hpp"
 
 #include <fstream>
+#include <iostream>
 
 namespace Acts {
 
@@ -145,6 +146,7 @@ struct GaussianSumFitter {
 
 
     ACTS_INFO("#AM 3.1415926535897932384626433832795")
+    std::cout << "#AM this is a iostream output" << std::endl;
     
 
     // Initialize the forward propagation with the DirectNavigator
