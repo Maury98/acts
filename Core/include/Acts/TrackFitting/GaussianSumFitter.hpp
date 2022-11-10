@@ -145,8 +145,8 @@ struct GaussianSumFitter {
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
 
-    ACTS_INFO("#AM 3.1415926535897932384626433832795")
-    std::cout << "#AM this is a iostream output" << std::endl;
+    ACTS_INFO("#AM 3.1415926535897932384626433832795    This is from Benjamin's branch.")
+    std::cout << "#AM this is a iostream output.     This is from Benjamin's branch." << std::endl;
     
 
     // Initialize the forward propagation with the DirectNavigator
