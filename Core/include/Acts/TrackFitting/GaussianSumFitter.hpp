@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "Acts/EventData/VectorMultiTrajectory.hpp"
 #include "Acts/Propagator/EigenStepper.hpp"
 #include "Acts/Propagator/MultiStepperAborters.hpp"
@@ -152,6 +154,8 @@ struct GaussianSumFitter {
     // Check if we have the correct navigator
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
+    std::cout << "#AM 1" << std::endl; // AM
+
     // Initialize the forward propagation with the DirectNavigator
     auto fwdPropInitializer = [this](const auto& opts) {
       using Actors = ActionList<GsfActor>;
@@ -162,6 +166,8 @@ struct GaussianSumFitter {
       propOptions.setPlainOptions(opts.propagatorPlainOptions);
       propOptions.actionList.template get<GsfActor>()
           .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
+
+          std::cout << "#AM 2" << std::endl; // AM
 
       return propOptions;
     };
@@ -179,8 +185,12 @@ struct GaussianSumFitter {
       propOptions.actionList.template get<GsfActor>()
           .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
 
+          std::cout << "#AM 3" << std::endl; // AM
+
       return propOptions;
     };
+
+    std::cout << "#AM 4" << std::endl; // AM
 
     return fit_impl(begin, end, sParameters, options, fwdPropInitializer,
                     bwdPropInitializer, trackContainer);
@@ -208,6 +218,8 @@ struct GaussianSumFitter {
       }
       return error;
     };
+
+    std::cout << "#AM 5" << std::endl; // AM
 
     // Define directions based on input propagation direction. This way we can
     // refer to 'forward' and 'backward' regardless of the actual direction.
@@ -276,22 +288,32 @@ struct GaussianSumFitter {
 
       r.fittedStates = &trackContainer.trackStateContainer();
 
+      std::cout << "#AM 6" << std::endl; // AM
+
       // This allows the initialization with single- and multicomponent start
       // parameters
       if constexpr (not IsMultiParameters::value) {
         using Charge = typename IsMultiParameters::Charge;
 
+        std::cout << "#AM 7" << std::endl; // AM
+
         MultiComponentBoundTrackParameters<Charge> params(
             sParameters.referenceSurface().getSharedPtr(),
             sParameters.parameters(), sParameters.covariance());
 
+        std::cout << "#AM 8" << std::endl; // AM
+
         return m_propagator.propagate(params, fwdPropOptions,
                                       std::move(inputResult));
       } else {
+        std::cout << "#AM 9" << std::endl; // AM
         return m_propagator.propagate(sParameters, fwdPropOptions,
                                       std::move(inputResult));
       }
+      std::cout << "#AM 10" << std::endl; // AM
     }();
+
+    std::cout << "#AM 11" << std::endl; // AM
 
     if (!fwdResult.ok()) {
       return return_error_or_abort(fwdResult.error());
