@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "Acts/EventData/VectorMultiTrajectory.hpp"
 #include "Acts/Propagator/EigenStepper.hpp"
 #include "Acts/Propagator/MultiStepperAborters.hpp"
@@ -152,35 +154,62 @@ struct GaussianSumFitter {
     // Check if we have the correct navigator
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
+    std::cout << "#AM 1" << std::endl; // AM
+
     // Initialize the forward propagation with the DirectNavigator
     auto fwdPropInitializer = [this](const auto& opts) {
       using Actors = ActionList<GsfActor>;
       using Aborters = AbortList<EndOfWorldReached>;
 
+      std::cout << "#AM 2" << std::endl; // AM
+
       PropagatorOptions<Actors, Aborters> propOptions(opts.geoContext,
                                                       opts.magFieldContext);
+      std::cout << "#AM 3" << std::endl; // AM
       propOptions.setPlainOptions(opts.propagatorPlainOptions);
+      std::cout << "#AM 4" << std::endl; // AM
       propOptions.actionList.template get<GsfActor>()
           .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
+      std::cout << "#AM 5" << std::endl; // AM
 
       return propOptions;
     };
+
+    std::cout << "#AM 6" << std::endl; // AM
 
     // Initialize the backward propagation with the DirectNavigator
     auto bwdPropInitializer = [this](const auto& opts) {
       using Actors = ActionList<GsfActor>;
       using Aborters = AbortList<EndOfWorldReached>;
-
+      std::cout << "#AM 7" << std::endl; // AM
       PropagatorOptions<Actors, Aborters> propOptions(opts.geoContext,
                                                       opts.magFieldContext);
+      std::cout << "#AM 8" << std::endl; // AM
 
       propOptions.setPlainOptions(opts.propagatorPlainOptions);
+      std::cout << "#AM 9" << std::endl; // AM
 
       propOptions.actionList.template get<GsfActor>()
           .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
+      std::cout << "#AM 10" << std::endl; // AM
 
       return propOptions;
     };
+
+    std::cout << "#AM 11" << std::endl; // AM
+
+    // if (!fwdPropInitializer || fwdPropInitializer==nullptr){
+    //   std::cout << "#AM We have a pb: fwdPropInitializer does not exist." << std::endl; // AM
+    // }
+
+    // if (!bwdPropInitializer || bwdPropInitializer==nullptr){
+    //   std::cout << "#AM We have a pb: bwdPropInitializer does not exist." << std::endl; // AM
+    // }
+
+    // std::cout << "#AM Checking if pointers are null or not. Let's start with fwdPropInitializer:" << std::endl;
+    // std::cout << (fwdPropInitializer == NULL) << std::endl << "Now with bwdPropInitializer:" << (bwdPropInitializer == NULL) << std::endl;
+
+    //std::cout << "fwdPropInitializer:" << !fwdPropInitializer << std::endl << "bwdPropInitializer:" << !bwdPropInitializer << std::endl;
 
     return fit_impl(begin, end, sParameters, options, fwdPropInitializer,
                     bwdPropInitializer, trackContainer);
@@ -201,6 +230,8 @@ struct GaussianSumFitter {
            const bwd_prop_initializer_t& bwdPropInitializer,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
       const {
+
+        std::cout << "#AM 12" << std::endl; // AM
     // return or abort utility
     auto return_error_or_abort = [&](auto error) {
       if (options.abortOnError) {
@@ -209,10 +240,14 @@ struct GaussianSumFitter {
       return error;
     };
 
+    std::cout << "#AM 13" << std::endl; // AM
+
     // Define directions based on input propagation direction. This way we can
     // refer to 'forward' and 'backward' regardless of the actual direction.
     const auto gsfForward = options.propagatorPlainOptions.direction;
+    std::cout << "#AM 14" << std::endl; // AM
     const auto gsfBackward = static_cast<NavigationDirection>(-1 * gsfForward);
+    std::cout << "#AM 15" << std::endl; // AM
 
     // Check if the start parameters are on the start surface
     auto intersectionStatusStartSurface =
@@ -221,10 +256,12 @@ struct GaussianSumFitter {
                        sParameters.position(GeometryContext{}),
                        sParameters.unitDirection(), true)
             .intersection.status;
+            std::cout << "#AM 16" << std::endl; // AM
 
     if (intersectionStatusStartSurface != Intersection3D::Status::onSurface) {
       ACTS_ERROR(
           "Surface intersection of start parameters with bound-check failed");
+      std::cout << "#AM 17" << std::endl; // AM
       return GsfError::StartParametersNotOnStartSurface;
     }
 
@@ -234,15 +271,20 @@ struct GaussianSumFitter {
                               << " input measurements");
     std::map<GeometryIdentifier, std::reference_wrapper<const SourceLink>>
         inputMeasurements;
+        std::cout << "#AM 18" << std::endl; // AM
     for (auto it = begin; it != end; ++it) {
       const SourceLink& sl = *it;
+      std::cout << "#AM 19" << std::endl; // AM
       inputMeasurements.emplace(sl.geometryId(), sl);
+      std::cout << "#AM 20" << std::endl; // AM
     }
 
     ACTS_VERBOSE(
         "Gsf: Final measuerement map size: " << inputMeasurements.size());
+    std::cout << "#AM 21" << std::endl; // AM
     throw_assert(sParameters.covariance() != std::nullopt,
                  "we need a covariance here...");
+    std::cout << "#AM 22" << std::endl; // AM
 
     /////////////////
     // Forward pass
@@ -254,6 +296,8 @@ struct GaussianSumFitter {
     auto fwdResult = [&]() {
       auto fwdPropOptions = fwdPropInitializer(options);
 
+      std::cout << "#AM 23" << std::endl; // AM
+
       // Catch the actor and set the measurements
       auto& actor = fwdPropOptions.actionList.template get<GsfActor>();
       actor.setOptions(options);
@@ -262,7 +306,11 @@ struct GaussianSumFitter {
       actor.m_cfg.inReversePass = false;
       actor.m_cfg.logger = m_actorLogger.get();
 
+      std::cout << "#AM 24" << std::endl; // AM
+
       fwdPropOptions.direction = gsfForward;
+
+      std::cout << "#AM 25" << std::endl; // AM
 
       // If necessary convert to MultiComponentBoundTrackParameters
       using IsMultiParameters =
@@ -276,21 +324,30 @@ struct GaussianSumFitter {
 
       r.fittedStates = &trackContainer.trackStateContainer();
 
+      std::cout << "#AM 26a" << std::endl; // AM
+
       // This allows the initialization with single- and multicomponent start
       // parameters
       if constexpr (not IsMultiParameters::value) {
+        std::cout << "#AM 26b" << std::endl; // AM
         using Charge = typename IsMultiParameters::Charge;
+
+        std::cout << "#AM 26c" << std::endl; // AM
 
         MultiComponentBoundTrackParameters<Charge> params(
             sParameters.referenceSurface().getSharedPtr(),
             sParameters.parameters(), sParameters.covariance());
 
+        std::cout << "#AM 26d" << std::endl; // AM
+
         return m_propagator.propagate(params, fwdPropOptions,
                                       std::move(inputResult));
       } else {
+        std::cout << "#AM 26e" << std::endl; // AM
         return m_propagator.propagate(sParameters, fwdPropOptions,
                                       std::move(inputResult));
       }
+      std::cout << "#AM 27" << std::endl; // AM
     }();
 
     if (!fwdResult.ok()) {
@@ -312,6 +369,8 @@ struct GaussianSumFitter {
     ACTS_VERBOSE("- processed states: " << fwdGsfResult.processedStates);
     ACTS_VERBOSE("- measuerement states: " << fwdGsfResult.measurementStates);
 
+    std::cout << "#AM 28" << std::endl; // AM
+
     //////////////////
     // Backward pass
     //////////////////
@@ -322,6 +381,8 @@ struct GaussianSumFitter {
     auto bwdResult = [&]() {
       auto bwdPropOptions = bwdPropInitializer(options);
 
+      std::cout << "#AM 29" << std::endl; // AM
+
       auto& actor = bwdPropOptions.actionList.template get<GsfActor>();
       actor.setOptions(options);
       actor.m_cfg.inputMeasurements = inputMeasurements;
@@ -329,7 +390,11 @@ struct GaussianSumFitter {
       actor.m_cfg.logger = m_actorLogger.get();
       actor.setOptions(options);
 
+      std::cout << "#AM 30" << std::endl; // AM
+
       bwdPropOptions.direction = gsfBackward;
+
+      std::cout << "#AM 31" << std::endl; // AM
 
       const Surface& target = options.referenceSurface
                                   ? *options.referenceSurface
@@ -340,6 +405,8 @@ struct GaussianSumFitter {
       typename propagator_t::template action_list_t_result_t<
           BoundTrackParameters, decltype(bwdPropOptions.actionList)>
           inputResult;
+
+          std::cout << "#AM 32" << std::endl; // AM
 
       // Unfortunately we must construct the result type here to be able to
       // return an error code
@@ -352,9 +419,15 @@ struct GaussianSumFitter {
               std::declval<decltype(bwdPropOptions)>(),
               std::declval<decltype(inputResult)>()));
 
+          std::cout << "#AM 33" << std::endl; // AM
+
       auto& r = inputResult.template get<detail::GsfResult<traj_t>>();
 
+      std::cout << "#AM 34" << std::endl; // AM
+
       r.fittedStates = &trackContainer.trackStateContainer();
+
+      std::cout << "#AM 35" << std::endl; // AM
 
       assert(
           (fwdGsfResult.lastMeasurementTip != MultiTrajectoryTraits::kInvalid &&
@@ -365,6 +438,8 @@ struct GaussianSumFitter {
       proxy.filtered() = proxy.predicted();
       proxy.filteredCovariance() = proxy.predictedCovariance();
 
+      std::cout << "#AM 36" << std::endl; // AM
+
       r.currentTip = fwdGsfResult.lastMeasurementTip;
       r.visitedSurfaces.push_back(&proxy.referenceSurface());
       r.surfacesVisitedBwdAgain.push_back(&proxy.referenceSurface());
@@ -373,11 +448,15 @@ struct GaussianSumFitter {
 
       const auto& params = *fwdGsfResult.lastMeasurementState;
 
+      std::cout << "#AM 37" << std::endl; // AM
+
       return m_propagator.template propagate<std::decay_t<decltype(params)>,
                                              decltype(bwdPropOptions),
                                              MultiStepperSurfaceReached>(
           params, target, bwdPropOptions, std::move(inputResult));
     }();
+
+    std::cout << "#AM 38" << std::endl; // AM
 
     if (!bwdResult.ok()) {
       return return_error_or_abort(bwdResult.error());
@@ -393,6 +472,8 @@ struct GaussianSumFitter {
       return return_error_or_abort(
           GsfError::NoMeasurementStatesCreatedBackward);
     }
+
+    std::cout << "#AM 39" << std::endl; // AM
 
     ////////////////////////////////////
     // Create Kalman Result
