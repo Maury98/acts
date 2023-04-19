@@ -262,6 +262,57 @@ struct GaussianSumFitter {
     ACTS_VERBOSE("+-----------------------------+");
     ACTS_VERBOSE("| Gsf: Do forward propagation |");
     ACTS_VERBOSE("+-----------------------------+");
+/*
+    int fwdResult_temp = [&]() {
+      auto fwdPropOptions = fwdPropInitializer(options);
+
+      // Catch the actor and set the measurements
+      auto& actor = fwdPropOptions.actionList.template get<GsfActor>();
+      actor.setOptions(options);
+      actor.m_cfg.inputMeasurements = inputMeasurements;
+      actor.m_cfg.numberMeasurements = inputMeasurements.size();
+      actor.m_cfg.inReversePass = false;
+      actor.m_cfg.logger = m_actorLogger.get();
+
+      fwdPropOptions.direction = gsfForward;
+
+      // If necessary convert to MultiComponentBoundTrackParameters
+      using IsMultiParameters =
+          detail::IsMultiComponentBoundParameters<start_parameters_t>;
+
+      typename propagator_t::template action_list_t_result_t<
+          CurvilinearTrackParameters, decltype(fwdPropOptions.actionList)>
+          inputResult;
+
+      auto& r = inputResult.template get<detail::GsfResult<traj_t>>();
+
+      r.fittedStates = &trackContainer.trackStateContainer();
+
+      std::cout << "#AM 6" << std::endl; // AM
+
+      // This allows the initialization with single- and multicomponent start
+      // parameters
+      if constexpr (not IsMultiParameters::value) {
+        using Charge = typename IsMultiParameters::Charge;
+
+        std::cout << "#AM 7" << std::endl; // AM
+
+        MultiComponentBoundTrackParameters<Charge> params(
+            sParameters.referenceSurface().getSharedPtr(),
+            sParameters.parameters(), sParameters.covariance());
+
+        std::cout << "#AM 8" << std::endl; // AM
+
+        std::cout << "return m_propagator.propagate(params, fwdPropOptions, std::move(inputResult));" << std::endl;
+        return 1;
+      } else {
+        std::cout << "#AM 9" << std::endl; // AM
+        std::cout << "return m_propagator.propagate(sParameters, fwdPropOptions, std::move(inputResult));" << std::endl;
+        return 2;
+      }
+      return 3;
+      // std::cout << "#AM 10" << std::endl; // AM
+    }();*/
 
     auto fwdResult = [&]() {
       auto fwdPropOptions = fwdPropInitializer(options);
@@ -310,7 +361,7 @@ struct GaussianSumFitter {
         return m_propagator.propagate(sParameters, fwdPropOptions,
                                       std::move(inputResult));
       }
-      std::cout << "#AM 10" << std::endl; // AM
+      //std::cout << "#AM 10" << std::endl; // AM
     }();
 
     std::cout << "#AM 11" << std::endl; // AM
